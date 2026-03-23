@@ -1,9 +1,8 @@
-import { Button, Card, List, Typography, message } from "antd";
+﻿import { Button, Card, List, Typography, message } from "antd";
 import { useState } from "react";
 import { runExecutionPreview } from "../api/execution";
 import { ExecutionPreview, SpreadCandidate } from "../types/domain";
 import { STORAGE_KEY } from "./RecommendationsPage";
-
 
 function loadCandidate(): SpreadCandidate | null {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -23,7 +22,7 @@ export default function ExecutionPreviewPage() {
 
   const onRun = async () => {
     if (!candidate) {
-      message.error("请先从推荐页选择策略。");
+      message.error("Please select a strategy first.");
       return;
     }
     const data = await runExecutionPreview(candidate, 100000);
@@ -32,14 +31,12 @@ export default function ExecutionPreviewPage() {
 
   return (
     <>
-      <Typography.Title level={3}>执行预演</Typography.Title>
+      <Typography.Title level={3}>Execution Preview</Typography.Title>
       <Card style={{ marginBottom: 16 }}>
-        <Typography.Paragraph>
-          当前为 dry-run 模式，不会真实下单。
-        </Typography.Paragraph>
-        <Button type="primary" onClick={onRun}>生成执行计划</Button>
+        <Typography.Paragraph>Execution preview only. This action does not place real orders.</Typography.Paragraph>
+        <Button type="primary" onClick={onRun}>Generate Plan</Button>
       </Card>
-      <Card title="拟下单明细">
+      <Card title="Orders">
         <List
           dataSource={preview?.orders ?? []}
           renderItem={(item) => (
@@ -48,9 +45,7 @@ export default function ExecutionPreviewPage() {
             </List.Item>
           )}
         />
-        <Typography.Paragraph style={{ marginTop: 12 }}>
-          预估最大风险: {preview?.max_risk ?? 0}
-        </Typography.Paragraph>
+        <Typography.Paragraph style={{ marginTop: 12 }}>Estimated Max Risk: {preview?.max_risk ?? 0}</Typography.Paragraph>
       </Card>
     </>
   );

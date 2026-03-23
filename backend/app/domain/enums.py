@@ -23,5 +23,20 @@ class StrategyType(str, Enum):
 
 
 class RunMode(str, Enum):
-    DRY_RUN = "dry_run"
-    LIVE = "live"
+    DRY_RUN = "DRY_RUN"
+    SEMI_AUTO = "SEMI_AUTO"
+    LIVE_TRADING = "LIVE_TRADING"
+
+
+class PositionStatus(str, Enum):
+    OPENING = "opening"
+    OPEN = "open"
+    CLOSING = "closing"
+    CLOSED = "closed"
+    ERROR = "error"
+
+
+class ConfigDomain(str, Enum):
+    STRATEGY = "strategy"
+    RISK = "risk"
+    EXECUTION = "execution"

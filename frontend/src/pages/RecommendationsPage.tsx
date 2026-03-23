@@ -1,11 +1,11 @@
-import { Alert, Space, Spin, Typography } from "antd";
+﻿import { Alert, Space, Spin, Typography } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchBearCallRecommendations, fetchBullPutRecommendations } from "../api/strategies";
 import { RecommendationTable } from "../components/RecommendationTable";
 import { SpreadCandidate } from "../types/domain";
 
-const STORAGE_KEY = "selected_candidate";
+export const STORAGE_KEY = "selected_candidate";
 
 export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function RecommendationsPage() {
 
   return (
     <>
-      <Typography.Title level={3}>推荐策略</Typography.Title>
+      <Typography.Title level={3}>Strategy Recommendations</Typography.Title>
       {error ? <Alert type="error" message={error} /> : null}
       <Space direction="vertical" style={{ width: "100%" }} size={16}>
         <RecommendationTable
@@ -58,5 +58,3 @@ export default function RecommendationsPage() {
     </>
   );
 }
-
-export { STORAGE_KEY };

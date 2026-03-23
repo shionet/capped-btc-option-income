@@ -14,6 +14,7 @@ Edit `.env`:
 BINANCE_API_KEY=your_key
 BINANCE_API_SECRET=your_secret
 TRADING_LIVE_ENABLED=false
+ENABLE_LIVE_TRADING=false
 ```
 
 ## Run
@@ -37,6 +38,17 @@ alembic upgrade head
 - `POST /api/risk/check`
 - `POST /api/execution/preview`
 - `POST /api/backtest/run`
+
+## Extended APIs
+
+- Account: `/api/account/*`
+- Config: `/api/config/*`
+- Positions: `/api/positions/*`
+- PnL: `/api/pnl/*`
+- Market stream/cache: `/api/market/stream-status`, `/api/market/quotes/latest`, `/api/options/realtime-chain`
+- Trading mode and plans: `/api/trading/mode`, `/api/trading/execution/*`
+- Audit: `/api/audit/*`
+- System: `/api/system/health`
 
 Binance diagnostics:
 

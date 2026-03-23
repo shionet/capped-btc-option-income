@@ -22,14 +22,26 @@ class RecommendationQuery(BaseModel):
 
 class RiskCheckRequest(BaseModel):
     account_equity: float = Field(gt=0)
+    account_available_balance: float | None = None
     candidate: SpreadCandidate
     daily_risk_exposure: float = 0.0
     daily_realized_pnl: float = 0.0
+    current_position_count: int | None = None
+    same_direction_position_count: int | None = None
+    max_positions: int | None = None
+    max_same_direction_positions: int | None = None
+    consecutive_losses: int = 0
+    consecutive_loss_pause_threshold: int | None = None
     max_single_trade_loss_pct: float | None = None
     max_daily_exposure_pct: float | None = None
     max_daily_loss_pct: float | None = None
     min_iv: float | None = None
+    max_iv: float | None = None
     max_bid_ask_spread_ratio: float | None = None
+    min_activity: float | None = None
+    market_activity_score: float | None = None
+    overlap_ratio: float | None = None
+    max_overlap_ratio: float = 0.8
     existing_short_symbols: list[str] = Field(default_factory=list)
 
 

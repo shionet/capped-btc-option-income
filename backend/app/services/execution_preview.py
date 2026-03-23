@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.core.config import Settings
 from app.core.exceptions import LiveModeDisabledError
-from app.domain.enums import LegAction, RunMode
+from app.domain.enums import RunMode
 from app.domain.models import ExecutionPreview, PreviewOrder, SpreadCandidate
 from app.risk.engine import run_risk_checks
 
@@ -21,8 +21,8 @@ class ExecutionPreviewService:
         daily_risk_exposure: float,
         daily_realized_pnl: float,
     ) -> ExecutionPreview:
-        if mode == RunMode.LIVE and not self.settings.trading_live_enabled:
-            raise LiveModeDisabledError("Live mode is disabled by TRADING_LIVE_ENABLED=false.")
+        if mode == RunMode.LIVE_TRADING and not self.settings.live_trading_permitted():
+            raise LiveModeDisabledError("Live mode is disabled by ENABLE_LIVE_TRADING=false.")
 
         risk = run_risk_checks(
             candidate=candidate,
@@ -33,18 +33,18 @@ class ExecutionPreviewService:
         )
         orders = [
             PreviewOrder(
-                symbol=candidate.short_leg.quote.contract.symbol,
-                side="SELL",
-                quantity=quantity,
-                price=candidate.short_leg.price,
-                note="Short leg first to lock credit.",
-            ),
-            PreviewOrder(
                 symbol=candidate.long_leg.quote.contract.symbol,
                 side="BUY",
                 quantity=quantity,
                 price=candidate.long_leg.price,
-                note="Long protective leg.",
+                note="Protective long leg must fill first.",
+            ),
+            PreviewOrder(
+                symbol=candidate.short_leg.quote.contract.symbol,
+                side="SELL",
+                quantity=quantity,
+                price=candidate.short_leg.price,
+                note="Submit short leg only after protective leg is filled.",
             ),
         ]
         estimated_fees = sum(abs(o.price * o.quantity) for o in orders) * 0.0005
@@ -55,5 +55,5 @@ class ExecutionPreviewService:
             estimated_fees=estimated_fees,
             max_risk=candidate.max_loss * quantity,
             risk_check=risk,
-            note="Dry-run only. No live order placement is performed in MVP.",
+            note="Execution preview only. Real order placement requires explicit confirmation and mode controls.",
         )

@@ -1,4 +1,6 @@
 export type StrategyType = "bull_put_spread" | "bear_call_spread" | "iron_condor";
+export type TradingMode = "DRY_RUN" | "SEMI_AUTO" | "LIVE_TRADING";
+export type PositionStatus = "opening" | "open" | "closing" | "closed" | "error";
 
 export interface OptionContract {
   symbol: string;
@@ -37,6 +39,9 @@ export interface SpreadCandidate {
   days_to_expiry: number;
   iv_proxy?: number | null;
   score: number;
+  max_trade_risk?: number;
+  max_position_size?: number;
+  position_size_allowed?: boolean;
 }
 
 export interface RiskCheckResult {
@@ -47,7 +52,7 @@ export interface RiskCheckResult {
 }
 
 export interface ExecutionPreview {
-  mode: "dry_run" | "live";
+  mode: TradingMode;
   strategy_type: StrategyType;
   orders: Array<{
     symbol: string;
@@ -60,4 +65,41 @@ export interface ExecutionPreview {
   max_risk: number;
   risk_check: RiskCheckResult;
   note: string;
+}
+
+export interface TradingModeState {
+  mode: TradingMode;
+  live_trading_enabled: boolean;
+  execution_config_version: number;
+  updated_at?: string | null;
+}
+
+export interface PositionItem {
+  position_id: string;
+  strategy_type: string;
+  underlying: string;
+  exchange: string;
+  opened_at?: string | null;
+  closed_at?: string | null;
+  expiry?: string | null;
+  quantity: number;
+  net_credit_open: number;
+  current_value: number;
+  unrealized_pnl: number;
+  realized_pnl: number;
+  max_profit: number;
+  max_loss: number;
+  risk_utilization: number;
+  margin_used: number;
+  status: PositionStatus;
+}
+
+export interface PnlSummary {
+  realized_pnl: number;
+  unrealized_pnl: number;
+  today_pnl: number;
+  week_pnl: number;
+  month_pnl: number;
+  open_positions: number;
+  closed_positions: number;
 }

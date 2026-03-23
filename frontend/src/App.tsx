@@ -7,7 +7,7 @@ const { Header, Content } = Layout;
 function InnerApp() {
   const { token } = theme.useToken();
   const location = useLocation();
-  const selectedKey = location.pathname === "/" ? "/" : `/${location.pathname.split("/")[1]}`;
+  const selectedKey = location.pathname === "/" ? "/dashboard" : `/${location.pathname.split("/")[1]}`;
 
   return (
     <Layout style={{ minHeight: "100vh", background: token.colorBgLayout }}>
@@ -18,10 +18,13 @@ function InnerApp() {
           mode="horizontal"
           selectedKeys={[selectedKey]}
           items={[
-            { key: "/", label: <Link to="/">Dashboard</Link> },
-            { key: "/recommendations", label: <Link to="/recommendations">推荐策略</Link> },
-            { key: "/risk-check", label: <Link to="/risk-check">风控检查</Link> },
-            { key: "/execution-preview", label: <Link to="/execution-preview">执行预演</Link> }
+            { key: "/dashboard", label: <Link to="/dashboard">Dashboard</Link> },
+            { key: "/strategies", label: <Link to="/strategies">Strategies</Link> },
+            { key: "/positions", label: <Link to="/positions">Positions</Link> },
+            { key: "/pnl", label: <Link to="/pnl">PnL</Link> },
+            { key: "/risk", label: <Link to="/risk">Risk</Link> },
+            { key: "/config", label: <Link to="/config">Config</Link> },
+            { key: "/execution-monitor", label: <Link to="/execution-monitor">Execution</Link> },
           ]}
         />
       </Header>

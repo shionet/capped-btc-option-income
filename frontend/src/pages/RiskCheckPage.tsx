@@ -1,10 +1,9 @@
-import { Button, Card, Form, InputNumber, Typography, message } from "antd";
+﻿import { Button, Card, Form, InputNumber, Typography, message } from "antd";
 import { useState } from "react";
 import { runRiskCheck } from "../api/risk";
 import { RiskResultCard } from "../components/RiskResultCard";
 import { RiskCheckResult, SpreadCandidate } from "../types/domain";
 import { STORAGE_KEY } from "./RecommendationsPage";
-
 
 function loadCandidate(): SpreadCandidate | null {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -25,7 +24,7 @@ export default function RiskCheckPage() {
 
   const onSubmit = async () => {
     if (!candidate) {
-      message.error("请先从推荐页选择策略。");
+      message.error("Please select a strategy first.");
       return;
     }
     const values = await form.validateFields();
@@ -35,18 +34,14 @@ export default function RiskCheckPage() {
 
   return (
     <>
-      <Typography.Title level={3}>风控检查</Typography.Title>
+      <Typography.Title level={3}>Risk Check</Typography.Title>
       <Card style={{ marginBottom: 16 }}>
         <Form form={form} layout="inline" initialValues={{ accountEquity: 100000 }}>
-          <Form.Item
-            label="账户资金"
-            name="accountEquity"
-            rules={[{ required: true, message: "请输入账户资金" }]}
-          >
+          <Form.Item label="Account Equity" name="accountEquity" rules={[{ required: true, message: "Input account equity" }]}> 
             <InputNumber min={1} style={{ width: 200 }} />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={onSubmit}>执行检查</Button>
+            <Button type="primary" onClick={onSubmit}>Run Check</Button>
           </Form.Item>
         </Form>
       </Card>

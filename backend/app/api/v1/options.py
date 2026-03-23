@@ -4,8 +4,9 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import get_market_data_service
+from app.api.deps import get_market_cache_service, get_market_data_service
 from app.domain.enums import ExchangeName
+from app.services.market_cache import MarketCacheService
 from app.services.market_data import MarketDataService
 
 router = APIRouter(prefix="/api/options", tags=["options"])
@@ -17,6 +18,7 @@ async def get_option_chain(
     expiry: date | None = Query(default=None),
     limit: int = Query(default=300, ge=1, le=2000),
     service: MarketDataService = Depends(get_market_data_service),
+    cache: MarketCacheService = Depends(get_market_cache_service),
 ) -> dict:
     chain = await service.get_option_chain(exchange=exchange, expiry=expiry)
     rows = [
@@ -33,6 +35,7 @@ async def get_option_chain(
         }
         for q in chain[:limit]
     ]
+    cache.update_chain(rows)
     return {
         "ok": True,
         "exchange": exchange.value,
@@ -40,3 +43,12 @@ async def get_option_chain(
         "count": len(chain),
         "items": rows,
     }
+
+
+@router.get("/realtime-chain")
+def get_realtime_chain(
+    limit: int = Query(default=300, ge=1, le=2000),
+    cache: MarketCacheService = Depends(get_market_cache_service),
+) -> dict:
+    data = cache.latest_chain(limit=limit)
+    return {"ok": True, "data": data}

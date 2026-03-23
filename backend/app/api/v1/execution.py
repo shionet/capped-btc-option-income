@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_execution_preview_service
+from app.api.deps import get_execution_engine_service, get_execution_preview_service
 from app.core.exceptions import LiveModeDisabledError
 from app.domain.schemas import ExecutionPreviewRequest, ExecutionPreviewResponse
+from app.services.execution_engine import ExecutionEngineService
 from app.services.execution_preview import ExecutionPreviewService
 
 router = APIRouter(prefix="/api/execution", tags=["execution"])
@@ -27,3 +28,8 @@ async def execution_preview(
     except LiveModeDisabledError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ExecutionPreviewResponse(ok=True, preview=preview)
+
+
+@router.get("/monitor")
+def execution_monitor(service: ExecutionEngineService = Depends(get_execution_engine_service)) -> dict:
+    return {"ok": True, "data": service.monitor()}
