@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import time
@@ -37,6 +38,9 @@ class BinanceRestClient:
         self.recv_window = recv_window
         self.api_key = api_key
         self.api_secret = api_secret
+        self._options_exchange_info_cache: dict[str, Any] | None = None
+        self._options_exchange_info_cached_at: float = 0.0
+        self._options_exchange_info_ttl_seconds: int = 300
 
     def _sign(self, params: dict[str, Any]) -> str:
         if not self.api_secret:
@@ -73,33 +77,54 @@ class BinanceRestClient:
         base_url = self.options_base_url if use_options_base else self.base_url
         url = f"{base_url}{path}"
 
-        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+        max_retry = 2
+        for attempt in range(max_retry + 1):
+            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                try:
+                    response = await client.request(
+                        method=method.upper(),
+                        url=url,
+                        params=request_params,
+                        headers=headers,
+                    )
+                except httpx.HTTPError as exc:
+                    if attempt >= max_retry:
+                        raise BinanceRequestError(
+                            status_code=0,
+                            message=f"Binance network error: {exc}",
+                            payload={"url": url},
+                        ) from exc
+                    await asyncio.sleep(0.35 * (attempt + 1))
+                    continue
+
+            if response.is_success:
+                return response.json()
+
+            retry_after = 0.0
             try:
-                response = await client.request(
-                    method=method.upper(),
-                    url=url,
-                    params=request_params,
-                    headers=headers,
-                )
-            except httpx.HTTPError as exc:
-                raise BinanceRequestError(
-                    status_code=0,
-                    message=f"Binance network error: {exc}",
-                    payload={"url": url},
-                ) from exc
+                retry_after = float(response.headers.get("Retry-After", "0"))
+            except ValueError:
+                retry_after = 0.0
+            should_retry = response.status_code in {418, 429, 500, 502, 503, 504} and attempt < max_retry
+            if should_retry:
+                await asyncio.sleep(max(retry_after, 0.35 * (attempt + 1)))
+                continue
 
-        if response.is_success:
-            return response.json()
+            try:
+                payload = response.json()
+            except Exception:
+                payload = {"text": response.text}
+            raise BinanceRequestError(
+                status_code=response.status_code,
+                message=f"Binance request failed: {response.status_code}",
+                payload={
+                    "body": payload,
+                    "retry_after": response.headers.get("Retry-After"),
+                    "url": url,
+                },
+            )
 
-        try:
-            payload = response.json()
-        except Exception:
-            payload = {"text": response.text}
-        raise BinanceRequestError(
-            status_code=response.status_code,
-            message=f"Binance request failed: {response.status_code}",
-            payload=payload,
-        )
+        raise BinanceRequestError(status_code=0, message="Unexpected request retry failure", payload={"url": url})
 
     async def get_server_time(self) -> dict[str, Any]:
         return await self._request(method="GET", path="/api/v3/time", signed=False)
@@ -108,12 +133,26 @@ class BinanceRestClient:
         return await self._request(method="GET", path="/api/v3/ticker/price", params={"symbol": symbol}, signed=False)
 
     async def get_options_exchange_info(self) -> dict[str, Any]:
-        return await self._request(
-            method="GET",
-            path="/eapi/v1/exchangeInfo",
-            signed=False,
-            use_options_base=True,
-        )
+        now = time.time()
+        if (
+            self._options_exchange_info_cache is not None
+            and now - self._options_exchange_info_cached_at <= self._options_exchange_info_ttl_seconds
+        ):
+            return self._options_exchange_info_cache
+        try:
+            data = await self._request(
+                method="GET",
+                path="/eapi/v1/exchangeInfo",
+                signed=False,
+                use_options_base=True,
+            )
+            self._options_exchange_info_cache = data
+            self._options_exchange_info_cached_at = now
+            return data
+        except BinanceRequestError as exc:
+            if self._options_exchange_info_cache is not None and exc.status_code in {418, 429, 500, 502, 503, 504}:
+                return self._options_exchange_info_cache
+            raise
 
     async def get_options_ticker(self) -> list[dict[str, Any]]:
         return await self._request(

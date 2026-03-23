@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import get_recommendation_service
 from app.core.config import Settings, get_settings
 from app.domain.enums import ExchangeName, StrategyType
 from app.domain.models import SpreadCandidate
+from app.exchanges.binance.client import BinanceRequestError
 from app.services.recommendation import RecommendationService
 
 router = APIRouter(prefix="/api/strategies", tags=["strategies"])
@@ -33,13 +34,23 @@ async def get_bull_put_recommendations(
     service: RecommendationService = Depends(get_recommendation_service),
     settings: Settings = Depends(get_settings),
 ) -> dict:
-    data = await service.recommend(
-        strategy_type=StrategyType.BULL_PUT_SPREAD,
-        exchange=exchange,
-        expiry=expiry,
-        limit=limit,
-        account_equity_for_filter=account_equity,
-    )
+    try:
+        data = await service.recommend(
+            strategy_type=StrategyType.BULL_PUT_SPREAD,
+            exchange=exchange,
+            expiry=expiry,
+            limit=limit,
+            account_equity_for_filter=account_equity,
+        )
+    except BinanceRequestError as exc:
+        status = 429 if exc.status_code == 429 else 503
+        raise HTTPException(
+            status_code=status,
+            detail={
+                "message": "Market data provider is rate-limited or unavailable. Please retry shortly.",
+                "provider_status_code": exc.status_code,
+            },
+        ) from exc
     items = [_with_position_sizing(item, account_equity, settings) for item in data]
     return {"ok": True, "strategy_type": StrategyType.BULL_PUT_SPREAD.value, "count": len(items), "items": items}
 
@@ -53,12 +64,22 @@ async def get_bear_call_recommendations(
     service: RecommendationService = Depends(get_recommendation_service),
     settings: Settings = Depends(get_settings),
 ) -> dict:
-    data = await service.recommend(
-        strategy_type=StrategyType.BEAR_CALL_SPREAD,
-        exchange=exchange,
-        expiry=expiry,
-        limit=limit,
-        account_equity_for_filter=account_equity,
-    )
+    try:
+        data = await service.recommend(
+            strategy_type=StrategyType.BEAR_CALL_SPREAD,
+            exchange=exchange,
+            expiry=expiry,
+            limit=limit,
+            account_equity_for_filter=account_equity,
+        )
+    except BinanceRequestError as exc:
+        status = 429 if exc.status_code == 429 else 503
+        raise HTTPException(
+            status_code=status,
+            detail={
+                "message": "Market data provider is rate-limited or unavailable. Please retry shortly.",
+                "provider_status_code": exc.status_code,
+            },
+        ) from exc
     items = [_with_position_sizing(item, account_equity, settings) for item in data]
     return {"ok": True, "strategy_type": StrategyType.BEAR_CALL_SPREAD.value, "count": len(items), "items": items}
