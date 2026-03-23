@@ -37,6 +37,8 @@ export interface SpreadCandidate {
   reward_risk_ratio: number;
   distance_to_spot_pct: number;
   days_to_expiry: number;
+  daily_return_on_risk?: number | null;
+  annualized_return_on_risk?: number | null;
   iv_proxy?: number | null;
   score: number;
   max_trade_risk?: number;

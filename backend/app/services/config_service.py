@@ -37,6 +37,9 @@ class ConfigService:
                     "allowed_dte_min": self.settings.strategy_allowed_dte_min,
                     "allowed_dte_max": self.settings.strategy_allowed_dte_max,
                     "candidate_limit": self.settings.strategy_candidate_limit,
+                    "min_daily_return_on_risk": 0.0,
+                    "min_annualized_return_on_risk": 0.0,
+                    "score_dte_weight": 1.0,
                 },
                 "bull_put_spread": {
                     "sell_otm_min_pct": self.settings.strategy_bull_put_sell_otm_min_pct,
@@ -122,8 +125,16 @@ class ConfigService:
     def _validate_payload(self, domain: ConfigDomain, payload: dict[str, Any]) -> None:
         if domain == ConfigDomain.STRATEGY:
             base = payload.get("base", {})
-            if isinstance(base, dict) and int(base.get("candidate_limit", 1)) < 1:
-                raise ValueError("strategy.base.candidate_limit must be >= 1")
+            if isinstance(base, dict):
+                if int(base.get("candidate_limit", 1)) < 1:
+                    raise ValueError("strategy.base.candidate_limit must be >= 1")
+                dte_weight = float(base.get("score_dte_weight", 1.0))
+                if dte_weight < 0:
+                    raise ValueError("strategy.base.score_dte_weight must be >= 0")
+                min_daily = float(base.get("min_daily_return_on_risk", 0.0))
+                min_annualized = float(base.get("min_annualized_return_on_risk", 0.0))
+                if min_daily < 0 or min_annualized < 0:
+                    raise ValueError("strategy.base minimum return thresholds must be >= 0")
             return
         if domain == ConfigDomain.RISK:
             keys = ["max_single_trade_loss_pct", "max_daily_exposure_pct", "max_daily_loss_pct"]

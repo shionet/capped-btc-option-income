@@ -71,6 +71,8 @@ class SpreadCandidate(BaseModel):
     reward_risk_ratio: float
     distance_to_spot_pct: float
     days_to_expiry: int
+    daily_return_on_risk: float | None = None
+    annualized_return_on_risk: float | None = None
     iv_proxy: float | None = None
     score: float = 0.0
     reason_tags: list[str] = Field(default_factory=list)

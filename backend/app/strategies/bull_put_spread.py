@@ -11,11 +11,19 @@ def generate_bull_put_spreads(
     spot_price: float,
     option_chain: list[OptionQuote],
     settings: Settings,
+    sell_otm_min_pct: float | None = None,
+    sell_otm_max_pct: float | None = None,
+    buy_wing_min_pct: float | None = None,
+    buy_wing_max_pct: float | None = None,
+    min_net_premium: float = 0.0,
+    min_reward_risk: float = 0.0,
+    max_width: float | None = None,
 ) -> list[SpreadCandidate]:
-    sell_min = settings.strategy_sell_otm_min_pct / 100.0
-    sell_max = settings.strategy_sell_otm_max_pct / 100.0
-    wing_min = settings.strategy_wing_width_min_pct / 100.0
-    wing_max = settings.strategy_wing_width_max_pct / 100.0
+    sell_min = (sell_otm_min_pct if sell_otm_min_pct is not None else settings.strategy_sell_otm_min_pct) / 100.0
+    sell_max = (sell_otm_max_pct if sell_otm_max_pct is not None else settings.strategy_sell_otm_max_pct) / 100.0
+    wing_min = (buy_wing_min_pct if buy_wing_min_pct is not None else settings.strategy_wing_width_min_pct) / 100.0
+    wing_max = (buy_wing_max_pct if buy_wing_max_pct is not None else settings.strategy_wing_width_max_pct) / 100.0
+    spread_width_limit = max_width if max_width is not None else float("inf")
 
     puts = [q for q in option_chain if q.contract.option_type == OptionType.PUT]
     candidates: list[SpreadCandidate] = []
@@ -36,6 +44,13 @@ def generate_bull_put_spreads(
                 long_quote=long_quote,
             )
             if candidate is None:
+                continue
+            spread_width = abs(short_quote.contract.strike - long_quote.contract.strike)
+            if spread_width > spread_width_limit:
+                continue
+            if candidate.net_premium < min_net_premium:
+                continue
+            if candidate.reward_risk_ratio < min_reward_risk:
                 continue
             candidates.append(candidate)
 

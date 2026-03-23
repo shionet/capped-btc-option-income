@@ -35,9 +35,11 @@ def build_vertical_candidate(
 
     expiry = short_quote.contract.expiry
     dte = max((expiry - date.today()).days, 0)
+    dte_nonzero = max(dte, 1)
     distance_pct = abs(short_quote.contract.strike - spot_price) / max(spot_price, 1e-9) * 100
     iv_values = [v for v in [short_quote.iv, long_quote.iv] if v is not None and v > 0]
     iv_proxy = sum(iv_values) / len(iv_values) if iv_values else None
+    reward_risk_ratio = max_profit / max_loss
     candidate = SpreadCandidate(
         id=f"{strategy_type.value}:{short_quote.contract.symbol}:{long_quote.contract.symbol}",
         strategy_type=strategy_type,
@@ -49,9 +51,11 @@ def build_vertical_candidate(
         net_premium=net_credit,
         max_profit=max_profit,
         max_loss=max_loss,
-        reward_risk_ratio=max_profit / max_loss,
+        reward_risk_ratio=reward_risk_ratio,
         distance_to_spot_pct=distance_pct,
         days_to_expiry=dte,
+        daily_return_on_risk=reward_risk_ratio / dte_nonzero,
+        annualized_return_on_risk=reward_risk_ratio * (365.0 / dte_nonzero),
         iv_proxy=iv_proxy,
         reason_tags=[],
     )
