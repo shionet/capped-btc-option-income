@@ -43,7 +43,7 @@ async def get_bull_put_recommendations(
             account_equity_for_filter=account_equity,
         )
     except BinanceRequestError as exc:
-        status = 429 if exc.status_code == 429 else 503
+        status = 429 if exc.status_code in {418, 429} else 503
         raise HTTPException(
             status_code=status,
             detail={
@@ -73,7 +73,7 @@ async def get_bear_call_recommendations(
             account_equity_for_filter=account_equity,
         )
     except BinanceRequestError as exc:
-        status = 429 if exc.status_code == 429 else 503
+        status = 429 if exc.status_code in {418, 429} else 503
         raise HTTPException(
             status_code=status,
             detail={

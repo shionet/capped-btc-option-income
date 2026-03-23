@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     binance_options_base_url: str = Field(default="https://eapi.binance.com", alias="BINANCE_OPTIONS_BASE_URL")
     binance_timeout_seconds: int = Field(default=12, alias="BINANCE_TIMEOUT_SECONDS")
     binance_recv_window: int = Field(default=5000, alias="BINANCE_RECV_WINDOW")
+    binance_exchange_info_cache_ttl_seconds: int = Field(
+        default=5,
+        alias="BINANCE_EXCHANGE_INFO_CACHE_TTL_SECONDS",
+    )
 
     binance_api_key: str | None = Field(default=None, alias="BINANCE_API_KEY")
     binance_api_secret: str | None = Field(default=None, alias="BINANCE_API_SECRET")
